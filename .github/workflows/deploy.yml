@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/si-2025-lab3:${{ github.ref_name }}-latest .
+        run: docker build -t ${{ secrets.andromk }}/si-2025-lab3:${{ github.ref_name }}-latest .
 
   docker-push:
     needs: docker-build
@@ -32,7 +32,7 @@ jobs:
       - name: Log in to Docker Hub
         run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
       - name: Push Docker image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/si-2025-lab3:${{ github.ref_name }}-latest
+        run: docker push ${{ secrets.andromk }}/si-2025-lab3:${{ github.ref_name }}-latest
 
   github-pages:
     needs: docker-push
