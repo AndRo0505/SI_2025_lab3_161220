@@ -22,7 +22,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build Docker image
-        run: docker build -t andromk/si-2025-lab3:${{ github.ref_name }}-latest .
+        run: |
+          docker build -t si-2025-lab3 .
+          docker tag si-2025-lab3 andromk/si-2025-lab3:${{ github.ref_name }}-latest
+
 
   docker-push:
     needs: docker-build
