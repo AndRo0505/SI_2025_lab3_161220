@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - feature
 
 jobs:
   lint-html:
@@ -21,10 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Build Docker image with temp tag
-        run: |
-          docker build -t si2025lab3 .
-          docker tag si2025lab3 andromk/si-2025-lab3:${{ github.ref_name }}-latest
+      - name: Build Docker image
+        run: docker build -t andromk/si-2025-lab3:master-latest .
 
   docker-push:
     needs: docker-build
@@ -34,7 +31,7 @@ jobs:
       - name: Log in to Docker Hub
         run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u andromk --password-stdin
       - name: Push Docker image
-        run: docker push andromk/si-2025-lab3:${{ github.ref_name }}-latest
+        run: docker push andromk/si-2025-lab3:master-latest
 
   github-pages:
     needs: docker-push
