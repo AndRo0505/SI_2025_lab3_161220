@@ -12,7 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Lint HTML
-        uses: Cyb3r-Jak3/html5validator-action@v1.2.0
+        uses: Cyb3r-Jak3/html5validator-action@v1.0.4
+
 
   docker-build:
     needs: lint-html
