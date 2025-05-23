@@ -1,6 +1,6 @@
 name: CI/CD Workflow
 
-on: # This is the correct and only 'on:' block
+on:
   push:
     branches:
       - master
@@ -21,8 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Build Docker image
-        run: docker build -t andromk/si-2025-lab3:${{ github.ref_name }}-latest .
+      - name: Build Docker image with temp tag
+        run: |
+          docker build -t si2025lab3 .
+          docker tag si2025lab3 andromk/si-2025-lab3:${{ github.ref_name }}-latest
 
   docker-push:
     needs: docker-build
