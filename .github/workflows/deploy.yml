@@ -1,6 +1,6 @@
 name: CI/CD Workflow
 
-on:
+on: # This is the correct and only 'on:' block
   push:
     branches:
       - master
@@ -37,53 +37,7 @@ jobs:
   github-pages:
     needs: docker-push
     runs-on: ubuntu-latest
-    steps:name: CI/CD Workflow
-
-on:
-  push:
-    branches:
-      - master
-      - feature
-
-jobs:
-  lint-html:
-    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Install tidy
-        run: sudo apt-get install -y tidy
-      - name: Run tidy
-        run: tidy -errors -quiet index.html
-
-  docker-build:
-    needs: lint-html
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Build Docker image
-        run: docker build -t andromk/si-2025-lab3:${{ github.ref_name }}-latest .
-
-  docker-push:
-    needs: docker-build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Log in to Docker Hub
-        run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u andromk --password-stdin
-      - name: Push Docker image
-        run: docker push andromk/si-2025-lab3:${{ github.ref_name }}-latest # Corrected tag
-
-  github-pages:
-    needs: docker-push
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
-
       - uses: actions/checkout@v3
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
