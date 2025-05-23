@@ -16,28 +16,20 @@ jobs:
       - name: Run tidy
         run: tidy -errors -quiet index.html
 
-  docker-build:
-    needs: lint-html
+  docker-push: # This job now handles both building and pushing
+    needs: lint-html # It still depends on lint-html
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Build Docker image
         run: docker build -t andromk/si-2025-lab3:${{ github.ref_name }}-latest .
-
-  docker-push:
-    needs: docker-build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
       - name: Log in to Docker Hub
         run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u andromk --password-stdin
-      - name: List local Docker images # DEBUGGING STEP
-        run: docker images
       - name: Push Docker image
         run: docker push andromk/si-2025-lab3:${{ github.ref_name }}-latest
 
   github-pages:
-    needs: docker-push
+    needs: docker-push # This job now depends on the consolidated docker-push job
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
