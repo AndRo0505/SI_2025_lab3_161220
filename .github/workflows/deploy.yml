@@ -21,9 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Build and tag Docker image
-        run: |
-          docker build -t andromk/si-2025-lab3:${{ github.ref_name }}-latest .
+      - name: Build Docker image
+        run: docker build -t andromk/si-2025-lab3:${{ github.ref_name }}-latest .
 
   docker-push:
     needs: docker-build
