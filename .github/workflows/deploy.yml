@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - feature
 
 jobs:
   lint-html:
@@ -21,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build Docker image
-        run: docker build -t andromk/si-2025-lab3:master-latest .
+        run: docker build -t andromk/si-2025-lab3:${{ github.ref_name }}-latest .
 
   docker-push:
     needs: docker-build
@@ -30,8 +31,10 @@ jobs:
       - uses: actions/checkout@v3
       - name: Log in to Docker Hub
         run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u andromk --password-stdin
+      - name: List local Docker images # DEBUGGING STEP
+        run: docker images
       - name: Push Docker image
-        run: docker push andromk/si-2025-lab3:master-latest
+        run: docker push andromk/si-2025-lab3:${{ github.ref_name }}-latest
 
   github-pages:
     needs: docker-push
