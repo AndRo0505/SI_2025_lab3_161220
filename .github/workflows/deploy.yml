@@ -1,44 +1,87 @@
-name: CI/CD Workflow
+name: Lint, Build, Deploy HTML, and Push Docker Image
 
 on:
   push:
     branches:
-      - master
-      - feature
+      - '**' # Trigger on pushes to all branches
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write # Required for deploying to GitHub Pages
 
 jobs:
   lint-html:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Lint HTML
-        uses: Cyb3r-Jak3/html5validator-action@v1.2.0
+      - uses: actions/checkout@v3 # Checks out your repository
 
-  docker-build:
-    needs: lint-html
+      - name: Install htmlhint # Installs htmlhint globally
+        run: npm install -g htmlhint
+
+      - name: Lint HTML # Runs htmlhint on index.html
+        run: htmlhint index.html
+
+  build-htmls:
     runs-on: ubuntu-latest
+    needs: lint-html # This job depends on lint-html completing successfully
+    if: github.ref_name == 'master' # This job runs only on the 'master' branch
     steps:
       - uses: actions/checkout@v3
-      - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/si-2025-lab3:${{ github.ref_name }}-latest .
+
+      - name: Prepare HTML output # Creates an 'output' directory and copies index.html
+        run: |
+          mkdir -p output
+          cp index.html output/index.html
+
+      - name: Upload HTMLs as artifact # Uploads the 'output' directory as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: output-html # Name of the artifact
+          path: output # Path to the directory to upload
+
+  deploy-pages:
+    runs-on: ubuntu-latest
+    needs: build-htmls # This job depends on build-htmls completing successfully
+    if: github.ref_name == 'master' # This job runs only on the 'master' branch
+    environment:
+      name: github-pages # Specifies the GitHub Pages environment
+      url: ${{ steps.deployment.outputs.page_url }} # Sets the URL for the environment
+    steps:
+      - name: Download HTML artifact # Downloads the artifact created by build-htmls
+        uses: actions/download-artifact@v4
+        with:
+          name: output-html
+          path: created_htmls # Path where the artifact will be downloaded
+
+      - name: List downloaded stuff # Lists the contents of the downloaded artifact for debugging
+        run: ls -al created_htmls
+
+      - name: Setup Pages # Configures GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact # Uploads the content to be deployed to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: created_htmls # Path to the content to upload
+
+      - name: Deploy to GitHub Pages # Deploys the content to GitHub Pages
+        id: deployment # Assigns an ID to this step to reference its outputs
+        uses: actions/deploy-pages@v4
 
   docker-push:
-    needs: docker-build
     runs-on: ubuntu-latest
+    needs: lint-html # This job depends on lint-html completing successfully
+    env:
+      BRANCH_NAME: ${{ github.ref_name }} # Defines an environment variable for the branch name
     steps:
       - uses: actions/checkout@v3
-      - name: Log in to Docker Hub
-        run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-      - name: Push Docker image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/si-2025-lab3:${{ github.ref_name }}-latest
 
-  github-pages:
-    needs: docker-push
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
+      - name: Log in to DockerHub # Logs into Docker Hub using secrets
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker image # Builds the Docker image with a tag based on branch name
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/si-2025-lab3:${BRANCH_NAME}-latest .
+
+      - name: Push Docker image # Pushes the built Docker image to Docker Hub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/si-2025-lab3:${BRANCH_NAME}-latest
